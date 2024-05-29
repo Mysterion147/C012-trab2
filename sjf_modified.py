@@ -2,7 +2,10 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread, Lock
 from time import sleep
 import random
-from queue import Queue
+from queue import PriorityQueue
+
+tempos_espera = []
+tempo_espera = 0
 
 # Variáveis globais de ingredientes
 ingredientes = {'tomate': 5, 'queijo': 5, 'carne': 5}
@@ -24,20 +27,22 @@ def verificar_ingredientes(ingrediente, quantidade):
 # Função que simula o processo de preparação dos ingredientes na cozinha
 def cozinha():
     print("Cozinha: Iniciando processos de preparação de ingredientes.")
-    sleep(2) # Simula o tempo de preparação
+    sleep(1) # Simula o tempo de preparação
     print("Cozinha: Ingredientes preparados e prontos para uso.")
 
 # Função que representa um pedido feito ao restaurante
 def pedido(numero_pedido, tempo_preparo, queue):
     print(f"Pedido {numero_pedido}: Iniciando pedido.")
-    queue.put((numero_pedido, tempo_preparo))
+    queue.put((tempo_preparo, numero_pedido))
 
 def processar_pedidos(queue):
+    global tempo_espera
+
     while True:
         pedido_info = queue.get()
         if pedido_info is None:
             break
-        numero_pedido, tempo_preparo = pedido_info
+        tempo_preparo, numero_pedido = pedido_info
         # Verifica se há ingredientes suficientes para o pedido
         if verificar_ingredientes('carne', 1) and \
             verificar_ingredientes('queijo', 1) and \
@@ -47,6 +52,9 @@ def processar_pedidos(queue):
             sleep(tempo_preparo) # Simula o tempo de preparo
             print(f"Pedido {numero_pedido}: Pedido pronto em {tempo_preparo} segundos")
             print(f"Pedido {numero_pedido}: Pedido entregue!")
+
+            tempos_espera.append(tempo_espera)
+            tempo_espera = tempo_preparo
         else:
             print(f"Pedido {numero_pedido}: Ingredientes insuficientes. Pedido cancelado.")
         queue.task_done()
@@ -55,18 +63,19 @@ def processar_pedidos(queue):
 def main():
     num_pedidos = 5  # Número de pedidos a serem gerenciados
 
-    # Fila para manter os pedidos em ordem
-    pedidos_queue = Queue()
+    # Fila de prioridade para manter os pedidos ordenados pelo tempo de preparo
+    pedidos_queue = PriorityQueue()
 
     # Iniciando a thread da cozinha
     cozinha_thread = Thread(target=cozinha)
     cozinha_thread.start()
+    cozinha_thread.join()
 
     # Criando um pool de threads para processar os pedidos
     pool = ThreadPool()
 
     # Adicionando as tarefas dos pedidos ao pool
-    tempos_preparo = [random.randint(1, 5) for _ in range(num_pedidos)]
+    tempos_preparo = [1, 5, 4, 5, 3]
     for i, tempo in enumerate(tempos_preparo, start=1):
         pool.apply_async(pedido, args=(i, tempo, pedidos_queue))
 
@@ -86,6 +95,10 @@ def main():
     processador_thread.join()
 
     print("Todos os pedidos em preparação, foram finalizados!")
+
+    print("\nAvaliação do Algoritmo...")
+    print("Tempos de espera:", tempos_espera)
+    print(f"Tempos médio de espera: {sum(tempos_espera)/len(tempos_espera)} segundos.")
 
 # Verifica se o script está sendo executado diretamente como o programa principal
 if __name__ == "__main__":
