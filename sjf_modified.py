@@ -6,9 +6,9 @@ from queue import PriorityQueue
 
 from matplotlib import pyplot as plt
 
+ordem_preparo = []
 tempos_espera = []
 tempo_espera = 0
-ordem_preparo = []
 
 # Variáveis globais de ingredientes
 ingredientes = {'tomate': 5, 'queijo': 5, 'carne': 5}
@@ -114,20 +114,20 @@ def main():
     fig, gnt = plt.subplots()
     gnt.set_xlabel('Tempo')
     gnt.set_ylabel('Pedidos')
-    gnt.set_title('Gráfico de Gantt - Tempos de Espera')
+    gnt.set_title('SJF - Tempos de Espera')
 
     # Definindo as barras do gráfico
     gnt.set_xlim(0, sum(tempos_preparo))
     gnt.grid(True)
 
-    y_ticks = range(1, len(ordem_preparo) + 1)
+    y_ticks = range(len(ordem_preparo))
     gnt.set_yticks(y_ticks)
     gnt.set_yticklabels([f'Pedido {i}' for i in ordem_preparo])
 
     soma_tempo_espera = 0
     for i in range(len(ordem_preparo)):
-        soma_tempo_espera = soma_tempo_espera + tempos_espera[ordem_preparo[i] - 1]
-        gnt.broken_barh([(soma_tempo_espera, tempos_preparo[ordem_preparo[i] - 1])], (i, 0.1), facecolors='blue')
+        soma_tempo_espera = soma_tempo_espera + tempos_espera[i]
+        gnt.broken_barh([(soma_tempo_espera, tempos_preparo[ordem_preparo[i] - 1])], (i, 1), facecolors='blue')
 
     # Exibindo o gráfico
     plt.savefig("sjf_gantt.png")
