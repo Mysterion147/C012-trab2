@@ -14,29 +14,33 @@ ordem_preparo = []
 ingredientes = {'tomate': 5, 'queijo': 5, 'carne': 5}
 ingredientes_lock = Lock()
 
+
 def verificar_ingredientes(ingrediente, quantidade):
     # Função de verificação dos ingredientes
     global ingredientes
-    
+
     with ingredientes_lock:
         # Verifica a quantidade de ingredientes disponíveis
         if ingredientes.get(ingrediente, 0) >= quantidade:
             # Caso tenha, decremente a quantidade usada do estoque
             ingredientes[ingrediente] -= quantidade
-            return True # Retorna que havia ingredientes disponíveis
+            return True  # Retorna que havia ingredientes disponíveis
         else:
-            return False # Retorna que não havia ingredientes disponíveis
+            return False  # Retorna que não havia ingredientes disponíveis
+
 
 # Função que simula o processo de preparação dos ingredientes na cozinha
 def cozinha():
     print("Cozinha: Iniciando processos de preparação de ingredientes.")
-    sleep(1) # Simula o tempo de preparação
+    sleep(1)  # Simula o tempo de preparação
     print("Cozinha: Ingredientes preparados e prontos para uso.")
+
 
 # Função que representa um pedido feito ao restaurante
 def pedido(numero_pedido, tempo_preparo, queue):
     print(f"Pedido {numero_pedido}: Iniciando pedido.")
     queue.put((numero_pedido, tempo_preparo))
+
 
 def processar_pedidos(queue):
     global tempo_espera
@@ -48,11 +52,11 @@ def processar_pedidos(queue):
         numero_pedido, tempo_preparo = pedido_info
         # Verifica se há ingredientes suficientes para o pedido
         if verificar_ingredientes('carne', 1) and \
-            verificar_ingredientes('queijo', 1) and \
-            verificar_ingredientes('tomate', 1):
+                verificar_ingredientes('queijo', 1) and \
+                verificar_ingredientes('tomate', 1):
             print(f"Pedido {numero_pedido}: Ingredientes disponíveis.")
             print(f"Pedido {numero_pedido}: Preparando pedido...")
-            sleep(tempo_preparo) # Simula o tempo de preparo
+            sleep(tempo_preparo)  # Simula o tempo de preparo
             print(f"Pedido {numero_pedido}: Pedido pronto em {tempo_preparo} segundos")
             print(f"Pedido {numero_pedido}: Pedido entregue!")
 
@@ -62,6 +66,7 @@ def processar_pedidos(queue):
         else:
             print(f"Pedido {numero_pedido}: Ingredientes insuficientes. Pedido cancelado.")
         queue.task_done()
+
 
 # Função principal do programa
 def main():
@@ -103,7 +108,7 @@ def main():
     print("\nAvaliação do Algoritmo...")
     print("Ordem de preparo:", ordem_preparo)
     print("Tempos de espera:", tempos_espera)
-    print(f"Tempos médio de espera: {sum(tempos_espera)/len(tempos_espera)} segundos.")
+    print(f"Tempos médio de espera: {sum(tempos_espera) / len(tempos_espera)} segundos.")
 
     # Criando o gráfico de Gantt
     fig, gnt = plt.subplots()
@@ -115,8 +120,9 @@ def main():
     gnt.set_xlim(0, sum(tempos_preparo))
     gnt.grid(True)
 
+    print(ordem_preparo)
     y_ticks = range(1, len(ordem_preparo) + 1)
-    gnt.set_yticks(0, len(ordem_preparo + 1))
+    gnt.set_yticks(y_ticks)
     gnt.set_yticklabels([f'Pedido {i}' for i in ordem_preparo])
 
     soma_tempo_espera = 0
@@ -126,6 +132,7 @@ def main():
 
     # Exibindo o gráfico
     plt.savefig("fifo_gantt.png")
+
 
 # Verifica se o script está sendo executado diretamente como o programa principal
 if __name__ == "__main__":

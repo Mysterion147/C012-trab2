@@ -4,36 +4,43 @@ from time import sleep
 import random
 from queue import PriorityQueue
 
+from matplotlib import pyplot as plt
+
 tempos_espera = []
 tempo_espera = 0
+ordem_preparo = []
 
 # Variáveis globais de ingredientes
 ingredientes = {'tomate': 5, 'queijo': 5, 'carne': 5}
 ingredientes_lock = Lock()
 
+
 def verificar_ingredientes(ingrediente, quantidade):
     # Função de verificação dos ingredientes
     global ingredientes
-    
+
     with ingredientes_lock:
         # Verifica a quantidade de ingredientes disponíveis
         if ingredientes.get(ingrediente, 0) >= quantidade:
             # Caso tenha, decremente a quantidade usada do estoque
             ingredientes[ingrediente] -= quantidade
-            return True # Retorna que havia ingredientes disponíveis
+            return True  # Retorna que havia ingredientes disponíveis
         else:
-            return False # Retorna que não havia ingredientes disponíveis
+            return False  # Retorna que não havia ingredientes disponíveis
+
 
 # Função que simula o processo de preparação dos ingredientes na cozinha
 def cozinha():
     print("Cozinha: Iniciando processos de preparação de ingredientes.")
-    sleep(1) # Simula o tempo de preparação
+    sleep(1)  # Simula o tempo de preparação
     print("Cozinha: Ingredientes preparados e prontos para uso.")
+
 
 # Função que representa um pedido feito ao restaurante
 def pedido(numero_pedido, tempo_preparo, queue):
     print(f"Pedido {numero_pedido}: Iniciando pedido.")
     queue.put((tempo_preparo, numero_pedido))
+
 
 def processar_pedidos(queue):
     global tempo_espera
@@ -45,19 +52,21 @@ def processar_pedidos(queue):
         tempo_preparo, numero_pedido = pedido_info
         # Verifica se há ingredientes suficientes para o pedido
         if verificar_ingredientes('carne', 1) and \
-            verificar_ingredientes('queijo', 1) and \
-            verificar_ingredientes('tomate', 1):
+                verificar_ingredientes('queijo', 1) and \
+                verificar_ingredientes('tomate', 1):
             print(f"Pedido {numero_pedido}: Ingredientes disponíveis.")
             print(f"Pedido {numero_pedido}: Preparando pedido...")
-            sleep(tempo_preparo) # Simula o tempo de preparo
+            sleep(tempo_preparo)  # Simula o tempo de preparo
             print(f"Pedido {numero_pedido}: Pedido pronto em {tempo_preparo} segundos")
             print(f"Pedido {numero_pedido}: Pedido entregue!")
 
+            ordem_preparo.append(numero_pedido)
             tempos_espera.append(tempo_espera)
             tempo_espera = tempo_preparo
         else:
             print(f"Pedido {numero_pedido}: Ingredientes insuficientes. Pedido cancelado.")
         queue.task_done()
+
 
 # Função principal do programa
 def main():
@@ -97,8 +106,32 @@ def main():
     print("Todos os pedidos em preparação, foram finalizados!")
 
     print("\nAvaliação do Algoritmo...")
+    print("Ordem de preparo:", ordem_preparo)
     print("Tempos de espera:", tempos_espera)
-    print(f"Tempos médio de espera: {sum(tempos_espera)/len(tempos_espera)} segundos.")
+    print(f"Tempos médio de espera: {sum(tempos_espera) / len(tempos_espera)} segundos.")
+
+    # Criando o gráfico de Gantt
+    fig, gnt = plt.subplots()
+    gnt.set_xlabel('Tempo')
+    gnt.set_ylabel('Pedidos')
+    gnt.set_title('Gráfico de Gantt - Tempos de Espera')
+
+    # Definindo as barras do gráfico
+    gnt.set_xlim(0, sum(tempos_preparo))
+    gnt.grid(True)
+
+    y_ticks = range(1, len(ordem_preparo) + 1)
+    gnt.set_yticks(y_ticks)
+    gnt.set_yticklabels([f'Pedido {i}' for i in ordem_preparo])
+
+    soma_tempo_espera = 0
+    for i in range(len(ordem_preparo)):
+        soma_tempo_espera = soma_tempo_espera + tempos_espera[ordem_preparo[i] - 1]
+        gnt.broken_barh([(soma_tempo_espera, tempos_preparo[ordem_preparo[i] - 1])], (i, 0.1), facecolors='blue')
+
+    # Exibindo o gráfico
+    plt.savefig("sjf_gantt.png")
+
 
 # Verifica se o script está sendo executado diretamente como o programa principal
 if __name__ == "__main__":
